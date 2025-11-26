@@ -1,22 +1,27 @@
 name: Publish to GHCR
 
 on:
-  workflow_dispatch:  # This allows you to click a "Run" button manually
+  workflow_dispatch:  # Allows manual run
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }} # This will automaticall be YOUR_USERNAME/windows
+  # We do NOT set IMAGE_NAME here anymore because we need to modify it first
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write  # IMPORTANT: This gives permission to upload to your registry
+      packages: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # --- NEW STEP: FORCE LOWERCASE ---
+      - name: Lowercase the repo name
+        run: |
+          echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
@@ -30,4 +35,5 @@ jobs:
         with:
           context: .
           push: true
+          # Now we use the lowercase variable we created above
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
